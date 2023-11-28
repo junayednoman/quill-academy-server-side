@@ -36,8 +36,32 @@ async function run() {
 
 
         // =-=-=-=-=-=-=-=-==-=-=-=-=-=-= API CREATION START =-=-=-=-=-=-=-=-==-=-=-=-=-=-= //
+        // app.get('/payments/ids/:email', async (req, res) => {
+        //     const query = { email: req.params.email };
+        //     const options = {
+        //         projection: { _id: 0, classId: 1 }
+        //     }
+        //     const result = await paymentCollection.find(query, options).toArray();
+        //     res.send(result)
+        // })
 
         // apis for payment
+        app.get('/classes/enrolled/:email', async (req, res) => {
+            const query = { email: req.params.email };
+            const options = {
+                projection: { _id: 0, classId: 1 }
+            }
+            const ids = await paymentCollection.find(query, options).toArray();
+
+            const idQuery = {
+                _id: {
+                    $in: ids.map(item => new ObjectId(item.classId))
+                }
+            }
+            const classes = await classCollection.find(idQuery).toArray();
+            res.send(classes)
+        });
+
         app.post('/payments', async (req, res) => {
             const paymentInfo = req.body;
             const result = await paymentCollection.insertOne(paymentInfo);
@@ -55,10 +79,19 @@ async function run() {
         })
 
         // apis for users
+        app.get('/users', async (req, res) => {
+            const result = await userCollection.find().toArray();
+            res.send(result)
+        })
+        app.get('/users/:email', async (req, res) => {
+            const query = { email: req.params.email }
+            const result = await userCollection.findOne(query);
+            res.send(result)
+        })
         app.get('/users/:email', async (req, res) => {
             const query = { email: req.params.email }
             const options = {
-                projection: {_id: 0, role:1}
+                projection: { _id: 0, role: 1 }
             }
             const result = await userCollection.findOne(query, options);
             res.send(result)
@@ -96,12 +129,17 @@ async function run() {
         })
 
         // apis for classes
+        // app.get('/classes/enrolled', async (req, res) => {
+        //     const ids = req.body;
+        //     console.log('ids', ids);
+        // });
         app.get('/classes/:id', async (req, res) => {
             const id = req.params.id;
             const query = { _id: new ObjectId(id) }
             const result = await classCollection.findOne(query);
             res.send(result);
         })
+
 
         app.get('/categories/:category', async (req, res) => {
             const category = req.params.category;
