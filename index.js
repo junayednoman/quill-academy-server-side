@@ -36,31 +36,6 @@ async function run() {
 
 
         // =-=-=-=-=-=-=-=-==-=-=-=-=-=-= API CREATION START =-=-=-=-=-=-=-=-==-=-=-=-=-=-= //
-        // app.get('/payments/ids/:email', async (req, res) => {
-        //     const query = { email: req.params.email };
-        //     const options = {
-        //         projection: { _id: 0, classId: 1 }
-        //     }
-        //     const result = await paymentCollection.find(query, options).toArray();
-        //     res.send(result)
-        // })
-
-        // apis for payment
-        app.get('/classes/enrolled/:email', async (req, res) => {
-            const query = { email: req.params.email };
-            const options = {
-                projection: { _id: 0, classId: 1 }
-            }
-            const ids = await paymentCollection.find(query, options).toArray();
-
-            const idQuery = {
-                _id: {
-                    $in: ids.map(item => new ObjectId(item.classId))
-                }
-            }
-            const classes = await classCollection.find(idQuery).toArray();
-            res.send(classes)
-        });
 
         app.post('/payments', async (req, res) => {
             const paymentInfo = req.body;
@@ -128,17 +103,6 @@ async function run() {
             res.send(result);
         })
 
-        // apis for classes
-        // app.get('/classes/enrolled', async (req, res) => {
-        //     const ids = req.body;
-        //     console.log('ids', ids);
-        // });
-        app.get('/classes/:id', async (req, res) => {
-            const id = req.params.id;
-            const query = { _id: new ObjectId(id) }
-            const result = await classCollection.findOne(query);
-            res.send(result);
-        })
 
 
         app.get('/categories/:category', async (req, res) => {
@@ -148,6 +112,57 @@ async function run() {
             res.send(result);
         })
 
+        // apis for class
+        app.get('/my-classes/:email', async (req, res) => {
+            const query = { teacher_email: req.params.email }
+            const result = await classCollection.find(query).toArray();
+            res.send(result);
+        })
+
+        app.get('/classes/enrolled-student/:id', async (req, res) => {
+            const id = req.params.id;
+            const query = { classId: id }
+            const result = await paymentCollection.find(query).toArray();
+            res.send(result)
+        })
+        app.post('/classes', async (req, res) => {
+            const classInfo = req.body;
+            const result = await classCollection.insertOne(classInfo);
+            res.send(result);
+        })
+        // app.get('/classes/:id', async(req, res)=>{
+        //     const id = req.params.id;
+        //     console.log(id);
+        // })
+        app.delete('/classes/:id', async (req, res) => {
+            const id = req.params.id;
+            const query = { _id: new ObjectId(id) }
+            const result = await classCollection.deleteOne(query);
+            res.send(result);
+        })
+        app.put('/classes/:id', async (req, res) => {
+            const updatedClass = req.body;
+            const query = { _id: new ObjectId(req.params.id) }
+            const options = { upsert: true };
+            const updatedInfo = {
+                $set: {
+                    title: updatedClass.title,
+                    image: updatedClass.image,
+                    teacher_name: updatedClass.teacher_name,
+                    teacher_email: updatedClass.teacher_email,
+                    short_description: updatedClass.short_description,
+                    price: updatedClass.price,
+                }
+            }
+            const result = await classCollection.updateOne(query, updatedInfo, updatedInfo);
+            res.send(result);
+        })
+        app.get('/classes/:id', async (req, res) => {
+            const id = req.params.id;
+            const query = { _id: new ObjectId(id) }
+            const result = await classCollection.findOne(query);
+            res.send(result);
+        })
         app.get('/all-classes', async (req, res) => {
             const result = await classCollection.find().toArray();
             res.send(result);
